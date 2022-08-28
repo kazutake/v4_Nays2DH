@@ -1,0 +1,239 @@
+name: build
+on:
+  push:
+    branches:
+      - main
+      - master
+env:
+  # online_update src directory
+  ONLINE_UPDATE_DEV_SRC_DIR: online_update_v4\dev_v4_src
+  ONLINE_UPDATE_DEV_DIR: online_update_v4\dev_v4
+  ONLINE_UPDATE_PROD_SRC_DIR: online_update_v4\prod_v4_src
+  ONLINE_UPDATE_PROD_DIR: online_update_v4\prod_v4
+
+  WORK_DIR: solver
+
+  # Repos
+  ONLINE_UPDATE_REPO: i-RIC/online_update_v4
+
+  # github API url
+  IRICLIB_API_URL: ${{github.api_url}}/repos/i-RIC/iriclib_v4
+  IFW_API_URL: ${{github.api_url}}/repos/scharlton2/ifw
+
+  # oneAPI
+  # Based on https://github.com/oneapi-src/oneapi-ci/blob/master/.github/workflows/build_all.yml
+  WINDOWS_HPCKIT_URL: https://registrationcenter-download.intel.com/akdlm/irc_nas/17762/w_HPCKit_p_2021.2.0.2901.exe
+  WINDOWS_HPCKIT_FILE: hpckit.exe
+  WINDOWS_HPCKIT_COMPONENTS: intel.oneapi.win.ifort-compiler
+
+jobs:
+  build:
+    # The CMake configure and build commands are platform agnostic and should work equally
+    # well on Windows or Mac.  You can convert this to a matrix build if you need
+    # cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: windows-2019
+    steps:
+    - name: Checkout solver repo
+      uses: actions/checkout@v2
+      with:
+        path: ${{env.WORK_DIR}}
+
+    - name: Checkout online_update repo
+      uses: actions/checkout@v2
+      with:
+        repository: i-RIC/online_update_v4
+        persist-credentials: false                # required to commit with a Personal access token
+        path: online_update_v4
+
+    - name: Read config.json and set environmental variables
+      shell: pwsh
+      run: |
+        Set-Location .\${{env.WORK_DIR}}
+        $c = Get-Content 'config.json' | ConvertFrom-Json
+        Write-Output "SOLVER_ID=${{github.actor}}_${{github.event.repository.name}}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        Write-Output "STATUS=$($c.status)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        Write-Output "BUILD=$($c.build)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+    - name: Download latest iricsdk
+      if: ${{ env.BUILD == 'True' }}
+      shell: pwsh
+      run: |
+        # GET /repos/{owner}/{repo}/releases/latest
+        # see https://docs.github.com/en/rest/reference/repos#get-the-latest-release
+        $latest = (Invoke-WebRequest -Uri $env:IRICLIB_API_URL/releases/latest -Method GET).Content | ConvertFrom-Json
+        $url = ($latest.assets | Where-Object {$_.name -match "^iricsdk-(?<major>0|[1-9]\d*)\.(?<minor>[0|1-9]\d*)\.(?<patch>[0|1-9]\d*)\.7z$"}).browser_download_url
+        curl -LO $url
+        $7zfile = $matches[0]
+        7z x $7zfile
+        del $7zfile
+        # export environment variable IRICLIB_VERSION for later steps
+        Write-Output "IRICLIB_VERSION=$($matches.major).$($matches.minor).$($matches.patch)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+    - name: Install oneAPI Fortran
+      if: ${{ env.BUILD == 'True' }}
+      shell: cmd
+      run: |
+        curl -fSLo %WINDOWS_HPCKIT_FILE% %WINDOWS_HPCKIT_URL%
+        start /b /wait %WINDOWS_HPCKIT_FILE% -s -x -f hpckit_extracted --log hpckit_extracted.log
+        hpckit_extracted\bootstrapper.exe -s --action install --components=%WINDOWS_HPCKIT_COMPONENTS% --eula=accept --continue-with-optional-error=yes -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=1 --log-dir=.
+
+    - name: Build program
+      if: ${{ env.BUILD == 'True' }}
+      shell: cmd
+      run: |
+        cd ${{env.WORK_DIR}}
+        .\make.bat
+
+    - name: Download Qt Installer Framework
+      shell: pwsh
+      run: |
+        # GET /repos/{owner}/{repo}/releases/latest
+        # see https://docs.github.com/en/rest/reference/repos#get-the-latest-release
+        # see https://docs.github.com/ja/rest/reference/repos#get-the-latest-release
+        $latest = (Invoke-WebRequest -Uri $env:IFW_API_URL/releases/latest -Method GET).Content | ConvertFrom-Json
+        $url = ($latest.assets | Where-Object {$_.name -match "^ifw-(?<major>0|[1-9]\d*)\.(?<minor>[0|1-9]\d*)\.7z$"}).browser_download_url
+        curl -LO $url
+        mkdir c:\Qt\Tools\QtInstallerFramework
+        $7zfile = $matches[0]
+        7z x -oc:\Qt\Tools\QtInstallerFramework $7zfile
+        del $7zfile
+        # export environment variable IFW_VERSION for later steps
+        Write-Output "IFW_VERSION=$($matches.major).$($matches.minor)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+    - name: Delete from dev
+      if: ${{ env.STATUS == 'private' }}
+      shell: pwsh
+      run: |
+        # delete folders if exists
+        if (Test-Path .\${{env.ONLINE_UPDATE_DEV_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}) {
+          Remove-Item .\${{env.ONLINE_UPDATE_DEV_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}} -recurse
+        }
+        if (Test-Path .\${{env.ONLINE_UPDATE_DEV_DIR}}\solver.${{env.SOLVER_ID}}) {
+          Remove-Item .\${{env.ONLINE_UPDATE_DEV_DIR}}\solver.${{env.SOLVER_ID}} -recurse
+        }
+        # delete item from Update.xml
+        $x = [XML](Get-Content .\${{env.ONLINE_UPDATE_DEV_DIR}}\Updates.xml)
+        $n = $x.SelectSingleNode("//Name[contains(text(), 'solver.${{env.SOLVER_ID}}')]/..")
+        if (-Not($n -eq $null)) {
+          $root = $x.Updates
+          $root.RemoveChild($n) | Out-Null
+          $x.OuterXml | Out-File .\${{env.ONLINE_UPDATE_DEV_DIR}}\Updates.xml
+        }
+        Set-Location .\online_update_v4
+        git add -A
+
+    - name: Delete from prod
+      if: ${{ env.STATUS == 'private' || env.STATUS == 'develop' }}
+      shell: pwsh
+      run: |
+        # delete folders if exists
+        if (Test-Path .\${{env.ONLINE_UPDATE_PROD_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}) {
+          Remove-Item .\${{env.ONLINE_UPDATE_PROD_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}} -recurse
+        }
+        if (Test-Path .\${{env.ONLINE_UPDATE_PROD_DIR}}\solver.${{env.SOLVER_ID}}) {
+          Remove-Item .\${{env.ONLINE_UPDATE_PROD_DIR}}\solver.${{env.SOLVER_ID}} -recurse
+        }
+        # delete item from Update.xml
+        $x = [XML](Get-Content .\${{env.ONLINE_UPDATE_PROD_DIR}}\Updates.xml)
+        $n = $x.SelectSingleNode("//Name[contains(text(), 'solver.${{env.SOLVER_ID}}')]/..")
+        if (-Not($n -eq $null)) {
+          $root = $x.Updates
+          $root.RemoveChild($n) | Out-Null
+          $x.OuterXml | Out-File .\${{env.ONLINE_UPDATE_PROD_DIR}}\Updates.xml
+        }
+        Set-Location .\online_update_v4
+        git add -A
+
+    - name: Prepare data for dev
+      if: ${{ env.STATUS == 'public' || env.STATUS == 'develop' }}
+      shell: pwsh
+      run: |
+        # copy folders if not exists
+        if (-Not (Test-Path .\${{env.ONLINE_UPDATE_DEV_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\data)) {
+          New-Item -Type Directory .\${{env.ONLINE_UPDATE_DEV_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\data
+        }
+        if (-Not (Test-Path .\${{env.ONLINE_UPDATE_DEV_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\meta)) {
+          New-Item -Type Directory .\${{env.ONLINE_UPDATE_DEV_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\meta
+        }
+
+        # copy files
+        Copy-Item .\${{env.WORK_DIR}}\install\* .\${{env.ONLINE_UPDATE_DEV_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\data\.
+        Copy-Item .\${{env.WORK_DIR}}\.github\workflows\meta\* .\${{env.ONLINE_UPDATE_DEV_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\meta\.
+
+        # replace SOLVER_ID in installscript.qs, SOLVER_NAME in package.xml
+        Set-Location ${{env.ONLINE_UPDATE_DEV_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\meta
+        (Get-Content installscript.qs) -Replace 'SOLVER_ID', '${{env.SOLVER_ID}}' | Set-Content installscript.qs
+
+        $def = [XML](Get-Content ..\data\definition.xml)
+        (Get-Content package.xml) -Replace 'SOLVER_NAME', $def.SolverDefinition.caption | Set-Content package.xml
+
+        Set-Location ..\..\..
+        python .\copy_release_and_version.py | Out-Null
+        git add .
+        Set-Location ..
+        git status
+
+
+    - name: Run repogen for dev
+      if: ${{ env.STATUS == 'public' || env.STATUS == 'develop' }}
+      shell: pwsh
+      run: |
+        Set-Location .\${{env.ONLINE_UPDATE_DEV_SRC_DIR}}\.
+        $repogen = "C:\Qt\Tools\QtInstallerFramework\" + $env:IFW_VERSION + "\bin\repogen.exe"
+        $ifw_args = "-p packages --update --include solver." + $env:SOLVER_ID + " ..\dev_v4"
+        Start-Process -FilePath $repogen -Wait -ArgumentList $ifw_args
+        Set-Location ..
+        git add dev_v4\solver.${{env.SOLVER_ID}}
+        git add -A
+        git status
+
+    - name: Prepare data for prod
+      if: ${{ env.STATUS == 'public' }}
+      shell: pwsh
+      run: |
+        # copy folders if not exists
+        if (-Not (Test-Path .\${{env.ONLINE_UPDATE_PROD_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\data)) {
+          New-Item -Type Directory .\${{env.ONLINE_UPDATE_PROD_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\data
+        }
+        if (-Not (Test-Path .\${{env.ONLINE_UPDATE_PROD_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\meta)) {
+          New-Item -Type Directory .\${{env.ONLINE_UPDATE_PROD_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\meta
+        }
+
+        # copy files
+        Copy-Item .\${{env.WORK_DIR}}\install\* .\${{env.ONLINE_UPDATE_PROD_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\data\.
+        Copy-Item .\${{env.WORK_DIR}}\.github\workflows\meta\* .\${{env.ONLINE_UPDATE_PROD_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\meta\.
+
+        # replace SOLVER_ID in installscript.qs, SOLVER_NAME in package.xml
+        Set-Location ${{env.ONLINE_UPDATE_PROD_SRC_DIR}}\packages\solver.${{env.SOLVER_ID}}\meta
+        (Get-Content installscript.qs) -Replace 'SOLVER_ID', '${{env.SOLVER_ID}}' | Set-Content installscript.qs
+
+        $def = [XML](Get-Content ..\data\definition.xml)
+        (Get-Content package.xml) -Replace 'SOLVER_NAME', $def.SolverDefinition.caption | Set-Content package.xml
+
+        Set-Location ..\..\..
+        python .\copy_release_and_version.py | Out-Null
+        git add .
+        Set-Location ..
+        git status
+
+    - name: Run repogen for prod
+      if: ${{ env.STATUS == 'public' }}
+      shell: pwsh
+      run: |
+        Set-Location .\${{env.ONLINE_UPDATE_PROD_SRC_DIR}}\.
+        $repogen = "C:\Qt\Tools\QtInstallerFramework\" + $env:IFW_VERSION + "\bin\repogen.exe"
+        $ifw_args = "-p packages --update --include solver." + $env:SOLVER_ID + " ..\prod_v4"
+        Start-Process -FilePath $repogen -Wait -ArgumentList $ifw_args
+
+        Set-Location ..
+        git add prod_v4\solver.${{env.SOLVER_ID}}
+        git add -A
+        git status
+
+    - name: Commit and push branch
+      uses: actions-js/push@master
+      with:
+        github_token: ${{secrets.ONLINE_UPDATE_TOKEN}}
+        repository: ${{env.ONLINE_UPDATE_REPO}}
+        directory: online_update_v4
