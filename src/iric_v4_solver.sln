@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31515.178
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{6989167D-11E4-40FE-8C1A-2192A86A7E90}") = "iric_v4_solver", "iric_v4_solver.vfproj", "{4608D9CF-7CEC-4BA3-9A5C-B982B0ED7F24}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4608D9CF-7CEC-4BA3-9A5C-B982B0ED7F24}.Debug|x64.ActiveCfg = Debug|x64
+		{4608D9CF-7CEC-4BA3-9A5C-B982B0ED7F24}.Debug|x64.Build.0 = Debug|x64
+		{4608D9CF-7CEC-4BA3-9A5C-B982B0ED7F24}.Debug|x86.ActiveCfg = Debug|Win32
+		{4608D9CF-7CEC-4BA3-9A5C-B982B0ED7F24}.Debug|x86.Build.0 = Debug|Win32
+		{4608D9CF-7CEC-4BA3-9A5C-B982B0ED7F24}.Release|x64.ActiveCfg = Release|x64
+		{4608D9CF-7CEC-4BA3-9A5C-B982B0ED7F24}.Release|x64.Build.0 = Release|x64
+		{4608D9CF-7CEC-4BA3-9A5C-B982B0ED7F24}.Release|x86.ActiveCfg = Release|Win32
+		{4608D9CF-7CEC-4BA3-9A5C-B982B0ED7F24}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {4B81358E-ADB8-44BD-B639-69B2F546C43E}
+	EndGlobalSection
+EndGlobal
