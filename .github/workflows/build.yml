@@ -51,7 +51,7 @@ jobs:
       run: |
         Set-Location .\${{env.WORK_DIR}}
         $c = Get-Content 'config.json' | ConvertFrom-Json
-        Write-Output "SOLVER_ID=${{github.actor}}_${{github.event.repository.name}}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        Write-Output "SOLVER_ID=${{github.repository_owner}}_${{github.event.repository.name}}" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         Write-Output "STATUS=$($c.status)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
         Write-Output "BUILD=$($c.build)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
