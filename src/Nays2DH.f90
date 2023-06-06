@@ -10361,8 +10361,8 @@ Program Shimizu
      tmp_caption(ii) = tmp_dummy
   end do
   !
-  write(*,*) 'Nays2DH on iRIC 3.x'
-  write(*,*) 'Copyright(C)2003-2018 by Yasuyuki SHIMIZU, Hokkaido Univ., Japan, and Hiroshi TAKEBAYASHI, Kyoto Univ., Japan, All Right Reserved'
+  write(*,*) 'Nays2DH on iRIC 4.x'
+  write(*,*) 'Copyright(C)2003-2023 by Yasuyuki SHIMIZU, Hokkaido Univ., Japan, and Hiroshi TAKEBAYASHI, Kyoto Univ., Japan, All Right Reserved'
   !
   !
   g     = 9.81d0
