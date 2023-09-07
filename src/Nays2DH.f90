@@ -10663,7 +10663,7 @@ Program Shimizu
    !
    ! --- Parameters for Hot Start ---
    !
-     CALL CG_IRIC_READ_INTEGER(fid,'writelag', i_re_flag_o, ier)
+     CALL CG_IRIC_READ_INTEGER(fid,'write_flag', i_re_flag_o, ier)
      CALL CG_IRIC_READ_INTEGER(fid,'read_flag', i_re_flag_i, ier)
      CALL CG_IRIC_READ_INTEGER(fid,'n_tempfile', n_rest, ier)
      CALL CG_IRIC_READ_STRING(fid,'tmp_readfile', tmp_file_i, ier)
