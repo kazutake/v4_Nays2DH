@@ -9702,6 +9702,10 @@ module ebank_m
 							if( dedn(i,j)>tantc ) then
 								dz1 = (eta(i,j+1)-eta(i,j)-tantc*dnx(i,j))/(1.d0+sj(i,j+1)/sj(i,j))
 								dz2 = -sj(i,j+1)/sj(i,j)*dz1
+								if( eta(i,j+1)-eta_zb(i,j+1)<-dz2 ) then
+									dz2 = -(eta(i,j+1)-eta_zb(i,j+1))
+									dz1 = -dz2*sj(i,j)/sj(i,j+1)
+								end if
 								dzx(i,j+1) = dzx(i,j+1)+dz2
 								dzx(i,j) = dzx(i,j)+dz1
 							end if
@@ -9717,6 +9721,10 @@ module ebank_m
 							if( -dedn(i,j)>tantc ) then
 								dz1 = (eta(i,j+1)-eta(i,j)+tantc*dnx(i,j))/(1.d0+sj(i,j+1)/sj(i,j))
 								dz2 = -sj(i,j+1)/sj(i,j)*dz1
+								if( eta(i,j)-eta_zb(i,j)<-dz1 ) then
+									dz1 = -(eta(i,j)-eta_zb(i,j))
+									dz2 = -dz1*sj(i,j)/sj(i,j+1)
+								end if
 								dzx(i,j) = dzx(i,j)+dz1
 								dzx(i,j+1) = dzx(i,j+1)+dz2
 							end if
@@ -9739,6 +9747,10 @@ module ebank_m
 							if( deds(i,j)>tantc ) then
 								dz1 = (eta(i+1,j)-eta(i,j)-tantc*dsy(i,j))/(1.d0+sj(i+1,j)/sj(i,j))
 								dz2 = -sj(i+1,j)/sj(i,j)*dz1
+								if( eta(i+1,j)-eta_zb(i+1,j)<-dz2 ) then
+									dz2 = -(eta(i+1,j)-eta_zb(i+1,j))
+									dz1 = -dz2*sj(i,j)/sj(i+1,j)
+								end if
 								dzx(i+1,j) = dzx(i+1,j)+dz2
 								dzx(i,j) = dzx(i,j)+dz1
 							end if
@@ -9754,6 +9766,10 @@ module ebank_m
 							if( -deds(i,j)>tantc ) then
 								dz1 = (eta(i+1,j)-eta(i,j)+tantc*dsy(i,j))/(1.d0+sj(i+1,j)/sj(i,j))
 								dz2 = -sj(i+1,j)/sj(i,j)*dz1
+								if( eta(i,j)-eta_zb(i,j)<-dz1 ) then
+									dz1 = -(eta(i,j)-eta_zb(i,j))
+									dz2 = -dz1*sj(i,j)/sj(i+1,j)
+								end if
 								dzx(i,j) = dzx(i,j)+dz1
 								dzx(i+1,j) = dzx(i+1,j)+dz2
 							end if
@@ -9844,6 +9860,10 @@ module ebank_m
 							if( dedn(i,j)>tantc ) then
 								dz1 = (eta(i,j+1)-eta(i,j)-tantc*dnx(i,j))/(1.d0+sj(i,j+1)/sj(i,j))
 								dz2 = -sj(i,j+1)/sj(i,j)*dz1
+								if( eta(i,j+1)-eta_zb(i,j+1)<-dz2 ) then
+									dz2 = -(eta(i,j+1)-eta_zb(i,j+1))
+									dz1 = -dz2*sj(i,j)/sj(i,j+1)
+								end if
 								dex(i,j+1) = dex(i,j+1)+dz2
 								dex(i,j  ) = dex(i,j  )+dz1
 								do k=1,nk
@@ -9863,6 +9883,10 @@ module ebank_m
 							if( -dedn(i,j)>tantc ) then
 								dz1 = (eta(i,j+1)-eta(i,j)+tantc*dnx(i,j))/(1.d0+sj(i,j+1)/sj(i,j))
 								dz2 = -sj(i,j+1)/sj(i,j)*dz1
+								if( eta(i,j)-eta_zb(i,j)<-dz1 ) then
+									dz1 = -(eta(i,j)-eta_zb(i,j))
+									dz2 = -dz1*sj(i,j)/sj(i,j+1)
+								end if
 								dex(i,j  ) = dex(i,j  )+dz1
 								dex(i,j+1) = dex(i,j+1)+dz2
 								do k=1,nk
@@ -9889,6 +9913,10 @@ module ebank_m
 							if( deds(i,j)>tantc ) then
 								dz1 = (eta(i+1,j)-eta(i,j)-tantc*dsy(i,j))/(1.d0+sj(i+1,j)/sj(i,j))
 								dz2 = -sj(i+1,j)/sj(i,j)*dz1
+								if( eta(i+1,j)-eta_zb(i+1,j)<-dz2 ) then
+									dz2 = -(eta(i+1,j)-eta_zb(i+1,j))
+									dz1 = -dz2*sj(i,j)/sj(i+1,j)
+								end if
 								dex(i+1,j) = dex(i+1,j)+dz2
 								dex(i  ,j) = dex(i  ,j)+dz1
 								do k=1,nk
@@ -9908,6 +9936,10 @@ module ebank_m
 							if( -deds(i,j)>tantc ) then
 								dz1 = (eta(i+1,j)-eta(i,j)+tantc*dsy(i,j))/(1.d0+sj(i+1,j)/sj(i,j))
 								dz2 = -sj(i+1,j)/sj(i,j)*dz1
+								if( eta(i,j)-eta_zb(i,j)<-dz1 ) then
+									dz1 = -(eta(i,j)-eta_zb(i,j))
+									dz2 = -dz1*sj(i,j)/sj(i+1,j)
+								end if
 								dex(i  ,j) = dex(i  ,j)+dz1
 								dex(i+1,j) = dex(i+1,j)+dz2
 								do k=1,nk
