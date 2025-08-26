@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioUserFile ProjectCreator="Intel Fortran" Keyword="Console Application" Version="11.0" ProjectIdGuid="{4608D9CF-7CEC-4BA3-9A5C-B982B0ED7F24}">
+	<Configurations>
+		<Configuration Name="Debug|Win32" CommandArguments="case1.cgn" WorkingDirectory="C:\Users\riverlink\RiverLink Dropbox\works\2024-2025\25-017_yachiyo_nays2dh\02_work\test-case" Environment="path=C:\Users\riverlink\iRIC_v4\guis\prepost;%path%">
+		</Configuration>
+		<Configuration Name="Debug|x64" CommandArguments="case1.cgn" WorkingDirectory="C:\Users\riverlink\RiverLink Dropbox\works\2024-2025\25-017_yachiyo_nays2dh\02_work\test-case" Environment="path=C:\Users\riverlink\iRIC_v4\guis\prepost;%path%">
+		</Configuration>
+		<Configuration Name="Release|Win32" CommandArguments="case1.cgn" WorkingDirectory="C:\Users\riverlink\RiverLink Dropbox\works\2024-2025\25-017_yachiyo_nays2dh\02_work\test-case" Environment="path=C:\Users\riverlink\iRIC_v4\guis\prepost;%path%">
+		</Configuration>
+		<Configuration Name="Release|x64" CommandArguments="case1.cgn" WorkingDirectory="C:\Users\riverlink\RiverLink Dropbox\works\2024-2025\25-017_yachiyo_nays2dh\02_work\test-case" Environment="path=C:\Users\riverlink\iRIC_v4\guis\prepost;%path%">
+		</Configuration>
+	</Configurations></VisualStudioUserFile>
